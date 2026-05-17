@@ -7,7 +7,7 @@ trigger:
 - none
 
 pool:
-  vmImage: 'ubuntu-latest'
+  vmImage: 'ubuntu-20.04'
 
 stages:
 - stage: Build
@@ -17,6 +17,7 @@ stages:
 
     - task: UseDotNet@2
       inputs:
+        packageType: 'sdk'
         version: '3.1.x'
 
     - task: DotNetCoreCLI@2
