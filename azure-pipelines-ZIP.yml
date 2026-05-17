@@ -107,10 +107,10 @@ stages:
 
     - script: |
         if [ $(Build.SourceBranchName) == 'main' ]; then
-          java -jar veracode-wrapper.jar -vid $(VERACODE_API_KEY_ID) -vkey $(VERACODE_API_KEY_SECRET) -action uploadandscan -appname "$(Build.DefinitionName)" -createprofile true -version $(build.buildNumber) -filepath $(caminhoPacote) -teams "$(veracodeTeams)" -deleteincompletescan 2
-        else
-          java -jar veracode-wrapper.jar -vid $(VERACODE_API_KEY_ID) -vkey $(VERACODE_API_KEY_SECRET) -action uploadandscan -appname "$(Build.DefinitionName)" -createprofile true -version $(build.buildNumber) -filepath $(caminhoPacote) -teams "$(veracodeTeams)" -createsandbox true -sandboxname "$(Build.SourceBranchName)" -deleteincompletescan 2
-        fi
+            java -jar veracode-wrapper.jar -vid $(VERACODE_API_KEY_ID) -vkey $(VERACODE_API_KEY_SECRET) -action uploadandscan -appname "$(Build.DefinitionName)" -createprofile true  -version $(build.buildNumber) -filepath $(caminhoPacote) -deleteincompletescan 2
+          else
+            java -jar veracode-wrapper.jar -vid $(VERACODE_API_KEY_ID) -vkey $(VERACODE_API_KEY_SECRET) -action uploadandscan -appname "$(Build.DefinitionName)" -createprofile true  -version $(build.buildNumber) -filepath $(caminhoPacote) -createsandbox true -sandboxname "$(Build.SourceBranchName)" -deleteincompletescan 2
+          fi
       displayName: 'Veracode U&S'
       continueOnError: true
 
