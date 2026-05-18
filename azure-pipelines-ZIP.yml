@@ -27,16 +27,10 @@ stages:
         workingDirectory: '$(Build.SourcesDirectory)/app'
 
     - script: |
-        SOURCE_PATH="$(pwd)"
-        DESTINATION_PATH="$(caminhoPacote)"
-        STAGING_DIR="$(mktemp -d)"
+        mkdir -p "$(Build.ArtifactStagingDirectory)"
+        TEMP_DIR=$(mktemp -d)
 
-        echo "SOURCE_PATH=$SOURCE_PATH"
-        echo "STAGING_DIR=$STAGING_DIR"
-
-        echo "Localizando assemblies compilados válidos..."
-
-        find "$SOURCE_PATH" -type f -name "*.dll" \
+        find . -type f -name "*.dll" \
           ! -iname "*Microsoft*" \
           ! -iname "*UnitTest*" \
           ! -iname "*Xunit*" \
@@ -44,60 +38,32 @@ stages:
           ! -path "*/obj/*" \
           ! -path "*/ref/*" \
           ! -path "*/refint/*" \
+          ! -path "*/node_modules/*" \
+          ! -path "*/.git/*" \
+          ! -path "*/TestResults/*" \
           | while read -r dllFile; do
 
               pdbFile="${dllFile%.dll}.pdb"
 
-              if [[ -f "$pdbFile" ]]; then
-
-                relativeDir="$(dirname "${dllFile#$SOURCE_PATH/}")"
-
-                mkdir -p "$STAGING_DIR/$relativeDir"
-
-                cp "$dllFile" "$STAGING_DIR/$relativeDir/"
-                cp "$pdbFile" "$STAGING_DIR/$relativeDir/"
-
-                echo "Assemblies adicionados:"
-                echo "  ${dllFile#$SOURCE_PATH/}"
-                echo "  ${pdbFile#$SOURCE_PATH/}"
+              if [ -f "$pdbFile" ]; then
+                cp --parents "$dllFile" "$TEMP_DIR"
+                cp --parents "$pdbFile" "$TEMP_DIR"
 
                 for ext in deps.json runtimeconfig.json; do
                   auxFile="${dllFile%.dll}.${ext}"
-
-                  if [[ -f "$auxFile" ]]; then
-                    cp "$auxFile" "$STAGING_DIR/$relativeDir/"
-
-                    echo "  ${auxFile#$SOURCE_PATH/}"
-                  fi
+                  [ -f "$auxFile" ] && cp --parents "$auxFile" "$TEMP_DIR"
                 done
 
                 webConfig="$(dirname "$dllFile")/web.config"
-
-                if [[ -f "$webConfig" ]]; then
-                  cp "$webConfig" "$STAGING_DIR/$relativeDir/"
-
-                  echo "  ${webConfig#$SOURCE_PATH/}"
-                fi
+                [ -f "$webConfig" ] && cp --parents "$webConfig" "$TEMP_DIR"
               fi
             done
 
-        echo "Gerando ZIP Veracode..."
+        cd "$TEMP_DIR"
+        zip -r "$(caminhoPacote)" .
 
-        cd "$STAGING_DIR"
-
-        zip -r "$SOURCE_PATH/$DESTINATION_PATH" . \
-          -x '*/node_modules/*' \
-             '*/.git/*' \
-             '*/obj/*' \
-             '*/ref/*' \
-             '*/refint/*' \
-             '*/TestResults/*'
-
-        echo "ZIP criado com sucesso:"
-        echo "$SOURCE_PATH/$DESTINATION_PATH"
-
-        echo "Conteúdo final do pacote:"
-        unzip -l "$SOURCE_PATH/$DESTINATION_PATH"
+        echo "ZIP criado:"
+        ls -lh "$(caminhoPacote)"
       displayName: 'Preparar pacote Veracode'
 
     - script: |
